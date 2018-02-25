@@ -37,12 +37,12 @@ PS4Controller::PS4Controller(): //This is an initialization list of the indexes 
 
   //subscribe to the incoming joystick input
   //argument description: (name of topic, number of messages to queue, callback pointer, what object to call that callback on)
-  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &TeleopTurtle::joyCallback, this);
+  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &PS4Controller::joyCallback, this);
 
 }
 
 // Callback method called when this node gets a joy messge
-void TeleopTurtle::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
+void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
   geometry_msgs::Twist twist;
   twist.angular.z = a_scale_*joy->axes[angular_];
   twist.linear.x = l_scale_*joy->axes[linear_];
@@ -51,8 +51,8 @@ void TeleopTurtle::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
 
 
 int main(int argc, char** argv){
-  ros::init(argc, argv, "teleop_turtle");
-  TeleopTurtle teleop_turtle;
+  ros::init(argc, argv, "ps4_controller");
+  PS4Controller ps4_controller;
 
   ros::spin();
 }
