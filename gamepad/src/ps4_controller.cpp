@@ -2,11 +2,11 @@
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Joy.h>
 
+//testing
 
-class TeleopTurtle
-{
+class PS4Controller{
 public:
-  TeleopTurtle();
+  PS4Controller();
 
 private:
   void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
@@ -17,30 +17,32 @@ private:
   double l_scale_, a_scale_;
   ros::Publisher vel_pub_;
   ros::Subscriber joy_sub_;
-
 };
 
 
-TeleopTurtle::TeleopTurtle():
+PS4Controller::PS4Controller(): //This is an initialization list of the indexes into the axes and buttons arrays
   linear_(1),
   angular_(2)
 {
 
+  //get parameters from the parameter server
+  //try to get a parameter named arg1, save it in arg2, if that fails use value from arg3
   nh_.param("axis_linear", linear_, linear_);
   nh_.param("axis_angular", angular_, angular_);
   nh_.param("scale_angular", a_scale_, a_scale_);
   nh_.param("scale_linear", l_scale_, l_scale_);
 
-
+  //advertise this node to ros
   vel_pub_ = nh_.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 1);
 
-
+  //subscribe to the incoming joystick input
+  //argument description: (name of topic, number of messages to queue, callback pointer, what object to call that callback on)
   joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &TeleopTurtle::joyCallback, this);
 
 }
 
-void TeleopTurtle::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
-{
+// Callback method called when this node gets a joy messge
+void TeleopTurtle::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
   geometry_msgs::Twist twist;
   twist.angular.z = a_scale_*joy->axes[angular_];
   twist.linear.x = l_scale_*joy->axes[linear_];
@@ -48,8 +50,7 @@ void TeleopTurtle::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 }
 
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv){
   ros::init(argc, argv, "teleop_turtle");
   TeleopTurtle teleop_turtle;
 
