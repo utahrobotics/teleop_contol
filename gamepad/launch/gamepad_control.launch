@@ -1,18 +1,20 @@
 <launch>
- <!-- Turtlesim Node-->
-  <node pkg="turtlesim" type="turtlesim_node" name="sim"/>
-
  <!-- joy node -->
-  <node respawn="true" pkg="joy"
-        type="joy_node" name="turtle_joy" >
+  <node respawn="true" pkg="joy" type="joy_node" name="joy_input" >
     <param name="dev" type="string" value="/dev/input/js0" />
     <param name="deadzone" value="0.12" />
   </node>
 
- <!-- Axes -->
-  <param name="axis_linear" value="1" type="int"/>
-  <param name="axis_angular" value="0" type="int"/>
-  <param name="scale_linear" value="2" type="double"/>
-  <param name="scale_angular" value="2" type="double"/>
-  <node pkg="gamepad" type="gamepad_ps4" name="teleop"/>
+ <!-- Axes Config -->
+  <param name="scale_linear" value="1" type="double"/>
+  <param name="scale_angular" value="1" type="double"/>
+
+  <param name="left_vert_axis" value="1" type="int" />
+  <param name="right_vert_axis" value="5" type="int" />
+
+ <!-- Button Config -->
+  <param name="start_button" value="12" type="int" />
+
+ <!-- gamepad node -->
+  <node pkg="gamepad" type="gamepad_ps4" name="teleop_control"/>
 </launch>
