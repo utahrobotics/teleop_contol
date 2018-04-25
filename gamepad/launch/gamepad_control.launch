@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
  <!-- joy node -->
   <node respawn="true" pkg="joy" type="joy_node" name="joy_input" >
@@ -12,9 +13,27 @@
   <param name="left_vert_axis" value="1" type="int" />
   <param name="right_vert_axis" value="5" type="int" />
 
+  <param name="pad_hoz_axis" value="6" type="int" />
+  <param name="pad_vert_axis" value="7" type="int" />
+
+  <param name="l2_axis" value="3" type="int" />
+  <param name="r2_axis" value="4" type="int" />
+
+
  <!-- Button Config -->
-  <param name="start_button" value="12" type="int" />
+  <param name="share_button" value="8" type="int" />
+  <param name="options_button" value="9" type="int" />
+
+  <param name="square_button" value="0" type="int" />
+  <param name="x_button" value="1" type="int" />
+  <param name="circle_button" value="2" type="int" />
+  <param name="triangle_button" value="3" type="int" />
+
+  <param name="l1_button" value="4" type="int" />
+  <param name="r1_button" value="5" type="int" />
+
 
  <!-- gamepad node -->
   <node pkg="gamepad" type="gamepad_ps4" name="teleop_control"/>
 </launch>
+
