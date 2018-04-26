@@ -24,6 +24,10 @@ private:
   int square_button_, x_button_, circle_button_, triangle_button_;
   int l1_button_, r1_button_;
   double linear_scale_, angular_scale_;
+
+  // keep track to handle joy driver bug
+  bool l2_has_changed_;
+  bool r2_has_changed_;
   
   // Robot control pubs
   ros::Publisher vel_pub_;
@@ -78,6 +82,8 @@ PS4Controller::PS4Controller() //This is an initialization list of the indexes i
   nh_.param("r2_axis", r2_axis_, r2_axis_);
   nh_.param("share_button", share_button_, share_button_);
   nh_.param("options_button", options_button_, options_button_);
+  l2_has_changed_ = false;
+  r2_has_changed_ = false;
 
   // Publishers to control robot
   vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
@@ -98,6 +104,9 @@ PS4Controller::PS4Controller() //This is an initialization list of the indexes i
 
 // Callback method called when this node gets a joy messge
 void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
+  l2_has_changed_ = l2_has_changed_ | joy->axes[l2_axis_] != 0.0;
+  r2_has_changed_ = r2_has_changed_ | joy->axes[r2_axis_] != 0.0;
+
   geometry_msgs::Twist twist;
   std_msgs::Empty empty;
 
@@ -119,9 +128,18 @@ void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
   dumper_pub_.publish(dumper_cmd);
 
   // spin digger = r2 normal digging (CCW), l2 reverse digging (CW)
+  // check if we have seen anything but 0 from these 2 ports.  if not, then there value is +1
   std_msgs::Float32 digger_cmd;
   float r2 = -(-1 + joy->axes[r2_axis_]) / 2.0; // convert [1,-1] to (0,1)
   float l2 = -(-1 + joy->axes[l2_axis_]) / 2.0; // convert [1,-1] to (0,1)
+  // if these haven't changed, the joy driver initializes them incorrectly, so we need to do this check
+  if (!l2_has_changed_) {
+	  l2 = 0.0;
+  }
+  if (!r2_has_changed_) {
+	  r2 = 0.0;
+  }
+
   digger_cmd.data = r2 - l2;
   digger_pub_.publish(digger_cmd);
 
