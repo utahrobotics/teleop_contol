@@ -2,6 +2,7 @@
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Joy.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/Float32.h>
 
 //testing comments
 
@@ -16,37 +17,46 @@ private:
 
   // axes
   int left_vert_axis_, right_vert_axis_;
-  int pad_vert_axis, pad_hoz_axis;
+  int dpad_vert_axis_, dpad_hoz_axis_;
   int l2_axis_, r2_axis_;
   // buttons
-  int start_button_, share_button, options_button;
+  int start_button_, share_button_, options_button_;
   int square_button_, x_button_, circle_button_, triangle_button_;
-  int l1_button, r1_button_;
+  int l1_button_, r1_button_;
   double linear_scale_, angular_scale_;
   
+  // Robot control pubs
   ros::Publisher vel_pub_;
-  ros::Publisher autonomy_cmd_pub_;
+  ros::Publisher extend_pub_;
+  ros::Publisher insert_pub_;
+  ros::Publisher dumper_pub_;
+  ros::Publisher digger_pub_;
+  // Misc button clicks
+  ros::Publisher click_start_pub_;
+  ros::Publisher click_share_pub_;
+  ros::Publisher click_options_pub_;
+
   ros::Subscriber joy_sub_;
 };
 
 
-PS4Controller::PS4Controller(): //This is an initialization list of the indexes into the axes and buttons arrays
-  linear_scale_(1.0),
-  angular_scale_(1.0),
-  left_vert_axis_(1),
-  right_vert_axis_(5),
-  pad_hoz_axis_(6),
-  pad_vert_axis_(7),
-  l2_axis_(3),
-  r2_axis_(4),
-  share_button_(8),
-  options_button_(9),
-  square_button_(0),
-  x_button_button_(1),
-  circle_button_(2),
-  triangle_button_(3),
-  l1_button_(4),
-  r1_button_(5)
+PS4Controller::PS4Controller() //This is an initialization list of the indexes into the axes and buttons arrays
+  //linear_scale_(1.0),
+  //angular_scale_(1.0),
+  //left_vert_axis_(1),
+  //right_vert_axis_(5),
+  //dpad_hoz_axis_(6),
+  //dpad_vert_axis_(7),
+  //l2_axis_(3),
+  //r2_axis_(4),
+  //share_button_(8),
+  //options_button_(9),
+  //square_button_(0),
+  //x_button_button_(1),
+  //circle_button_(2),
+  //triangle_button_(3),
+  //l1_button_(4),
+  //r1_button_(5)
 {
 
   //get parameters from the parameter server
@@ -62,23 +72,28 @@ PS4Controller::PS4Controller(): //This is an initialization list of the indexes 
   nh_.param("triangle_button", triangle_button_, triangle_button_);
   nh_.param("l1_button", l1_button_, l1_button_);
   nh_.param("r1_button", r1_button_, r1_button_);
-  nh_.param("pad_vert_axis", pad_vert_axis_, pad_vert_axis_);
-  nh_.param("pad_hoz_axis", pad_hoz_axis_, pad_hoz_axis_);
+  nh_.param("dpad_vert_axis", dpad_vert_axis_, dpad_vert_axis_);
+  nh_.param("dpad_hoz_axis", dpad_hoz_axis_, dpad_hoz_axis_);
   nh_.param("l2_axis", l2_axis_, l2_axis_);
   nh_.param("r2_axis", r2_axis_, r2_axis_);
   nh_.param("share_button", share_button_, share_button_);
   nh_.param("options_button", options_button_, options_button_);
 
-  //advertise this node to ros
+  // Publishers to control robot
   vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-  autonomy_cmd_pub_ = nh_.advertise<std_msgs::Empty>("/click_select_button", 10);
+  extend_pub_ = nh_.advertise<std_msgs::Float32>("/extend_la", 1); // la = linear actuator
+  insert_pub_ = nh_.advertise<std_msgs::Float32>("/insert_la", 1);
+  dumper_pub_ = nh_.advertise<std_msgs::Float32>("/dumper_spin", 1);
+  digger_pub_ = nh_.advertise<std_msgs::Float32>("/digger_spin", 1);
 
-  // TODO: how to publish to roboclaw and pololu? Just individual for each of the things? probably
+  // Misc button clicks
+  click_start_pub_ = nh_.advertise<std_msgs::Empty>("/click_start_button", 1);
+  click_share_pub_ = nh_.advertise<std_msgs::Empty>("/click_share_button", 1);
+  click_options_pub_ = nh_.advertise<std_msgs::Empty>("/click_options_button", 1);
 
   //subscribe to the incoming joystick input
   //argument description: (name of topic, number of messages to queue, callback pointer, what object to call that callback on)
-  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &PS4Controller::joyCallback, this);
-
+  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 1, &PS4Controller::joyCallback, this);
 }
 
 // Callback method called when this node gets a joy messge
@@ -88,12 +103,39 @@ void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
 
   twist.linear.x = linear_scale_ * (joy->axes[left_vert_axis_] + joy->axes[right_vert_axis_]); // has a maximum value of 2
   twist.angular.z = angular_scale_ * (joy->axes[left_vert_axis_] - joy->axes[right_vert_axis_]); // has a maximum value of 2
+  vel_pub_.publish(twist);
 
+  // extend = tri forward, x backward
+  std_msgs::Float32 extend_cmd;
+  extend_cmd.data = (joy->buttons[triangle_button_] - joy->buttons[x_button_]);
+  extend_pub_.publish(extend_cmd);
+  // insert = r1 down, l1 up
+  std_msgs::Float32 insert_cmd;
+  insert_cmd.data = (joy->buttons[r1_button_] - joy->buttons[l1_button_]);
+  insert_pub_.publish(insert_cmd);
+  // dumper = dpad up, dpad down
+  std_msgs::Float32 dumper_cmd;
+  dumper_cmd.data = (joy->axes[dpad_vert_axis_]);
+  dumper_pub_.publish(dumper_cmd);
+
+  // spin digger = r2 normal digging (CCW), l2 reverse digging (CW)
+  std_msgs::Float32 digger_cmd;
+  float r2 = -(-1 + joy->axes[r2_axis_]) / 2.0; // convert [1,-1] to (0,1)
+  float l2 = -(-1 + joy->axes[l2_axis_]) / 2.0; // convert [1,-1] to (0,1)
+  digger_cmd.data = r2 - l2;
+  digger_pub_.publish(digger_cmd);
+
+  // misc button clicks
   if(joy->buttons[start_button_]){
-    autonomy_cmd_pub_.publish(empty);
+    click_start_pub_.publish(empty);
+  }
+  if(joy->buttons[share_button_]){
+    click_share_pub_.publish(empty);
+  }
+  if(joy->buttons[options_button_]){
+    click_options_pub_.publish(empty);
   }
   
-  vel_pub_.publish(twist);
 }
 
 

@@ -4,6 +4,7 @@
   <node respawn="true" pkg="joy" type="joy_node" name="joy_input" >
     <param name="dev" type="string" value="/dev/input/js0" />
     <param name="deadzone" value="0.12" />
+    <param name="autorepeat_rate" value="2" />
   </node>
 
  <!-- Axes Config -->
@@ -13,14 +14,15 @@
   <param name="left_vert_axis" value="1" type="int" />
   <param name="right_vert_axis" value="5" type="int" />
 
-  <param name="pad_hoz_axis" value="6" type="int" />
-  <param name="pad_vert_axis" value="7" type="int" />
+  <param name="dpad_hoz_axis" value="6" type="int" />
+  <param name="dpad_vert_axis" value="7" type="int" />
 
   <param name="l2_axis" value="3" type="int" />
   <param name="r2_axis" value="4" type="int" />
 
 
  <!-- Button Config -->
+  <param name="start_button" value="12" type="int" />
   <param name="share_button" value="8" type="int" />
   <param name="options_button" value="9" type="int" />
 
