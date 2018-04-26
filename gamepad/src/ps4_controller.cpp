@@ -44,24 +44,7 @@ private:
 };
 
 
-PS4Controller::PS4Controller() //This is an initialization list of the indexes into the axes and buttons arrays
-  //linear_scale_(1.0),
-  //angular_scale_(1.0),
-  //left_vert_axis_(1),
-  //right_vert_axis_(5),
-  //dpad_hoz_axis_(6),
-  //dpad_vert_axis_(7),
-  //l2_axis_(3),
-  //r2_axis_(4),
-  //share_button_(8),
-  //options_button_(9),
-  //square_button_(0),
-  //x_button_button_(1),
-  //circle_button_(2),
-  //triangle_button_(3),
-  //l1_button_(4),
-  //r1_button_(5)
-{
+PS4Controller::PS4Controller() {
 
   //get parameters from the parameter server
   //try to get a parameter named arg1, save it in arg2, if that fails use value from arg3
