@@ -70,10 +70,10 @@ PS4Controller::PS4Controller() {
 
   // Publishers to control robot
   vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-  extend_pub_ = nh_.advertise<std_msgs::Float32>("/extend_la", 1); // la = linear actuator
-  insert_pub_ = nh_.advertise<std_msgs::Float32>("/insert_la", 1);
-  dumper_pub_ = nh_.advertise<std_msgs::Float32>("/dumper_spin", 1);
-  digger_pub_ = nh_.advertise<std_msgs::Float32>("/digger_spin", 1);
+  extend_pub_ = nh_.advertise<std_msgs::Float32>("/extend_la/cmd", 1); // la = linear actuator
+  insert_pub_ = nh_.advertise<std_msgs::Float32>("/insert_la/cmd", 1);
+  dumper_pub_ = nh_.advertise<std_msgs::Float32>("/dumper_spin/cmd", 1);
+  digger_pub_ = nh_.advertise<std_msgs::Float32>("/digger_spin/cmd", 1);
 
   // Misc button clicks
   click_start_pub_ = nh_.advertise<std_msgs::Empty>("/click_start_button", 1);
