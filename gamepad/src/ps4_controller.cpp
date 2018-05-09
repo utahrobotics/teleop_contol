@@ -94,17 +94,17 @@ void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
   std_msgs::Empty empty;
 
   twist.linear.x = linear_scale_ * (joy->axes[left_vert_axis_] + joy->axes[right_vert_axis_]); // has a maximum value of 2
-  twist.angular.z = angular_scale_ * (joy->axes[left_vert_axis_] - joy->axes[right_vert_axis_]); // has a maximum value of 2
+  twist.angular.z = angular_scale_ * (joy->axes[right_vert_axis_] - joy->axes[left_vert_axis_]); // has a maximum value of 2
   vel_pub_.publish(twist);
 
-  // extend = tri forward, x backward
-  std_msgs::Float32 extend_cmd;
-  extend_cmd.data = (joy->buttons[triangle_button_] - joy->buttons[x_button_]);
-  extend_pub_.publish(extend_cmd);
-  // insert = r1 down, l1 up
+  // insert = tri forward, x backward
   std_msgs::Float32 insert_cmd;
-  insert_cmd.data = (joy->buttons[r1_button_] - joy->buttons[l1_button_]);
+  insert_cmd.data = (joy->buttons[triangle_button_] - joy->buttons[x_button_]);
   insert_pub_.publish(insert_cmd);
+  // extend = r1 down, l1 up
+  std_msgs::Float32 extend_cmd;
+  extend_cmd.data = (joy->buttons[r1_button_] - joy->buttons[l1_button_]);
+  extend_pub_.publish(extend_cmd);
   // dumper = dpad up, dpad down
   std_msgs::Float32 dumper_cmd;
   dumper_cmd.data = (joy->axes[dpad_vert_axis_]);
