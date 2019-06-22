@@ -102,16 +102,16 @@ void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
   if (digging){ //use controls digger
 
     // The velocity of the linear acuator that controls the digger arm: value between 1 and -1
-    linear_rc_msg.data = -1.0f * joy->axes[right_trigger_];
+    linear_rc_msg.data =  joy->axes[left_vert_axis_];
 
     // The velocity of the digger drum: value between 1 and -1
-    digger_rc_msg.data = -1.0f * joy->axes[left_trigger_];
+    digger_rc_msg.data = -1.0f * joy->axes[right_horiz_axis_];
 
     digger_rc_.publish(digger_rc_msg);
     linear_rc_.publish(linear_rc_msg);
     
   } else { //use controls for mobility
-      // The linear-x component of the twist is the product of the linear scale factor and the left vertical axis input on joy
+    // The linear-x component of the twist is the product of the linear scale factor and the left vertical axis input on joy
     twist.linear.x = linear_scale_ * joy->axes[left_vert_axis_]; // has a maximum value of 1
 
     // The angular-z component of the twist is the product of the angular scale factor and the right horizontal axis input on joy
