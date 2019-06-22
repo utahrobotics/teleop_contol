@@ -100,7 +100,8 @@ void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
 
 
   if (digging){ //use controls digger
-
+    //TODO: make a right_vert_axis to control the digger for ease of use
+    //TODO: (optional) implement rudementary forward backward mobility controls using triggers
     // The velocity of the linear acuator that controls the digger arm: value between 1 and -1
     linear_rc_msg.data =  joy->axes[left_vert_axis_];
 
@@ -111,6 +112,8 @@ void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
     linear_rc_.publish(linear_rc_msg);
     
   } else { //use controls for mobility
+
+    //TODO: possibly consolidate the twist message to a single joy stick for ease of use
     // The linear-x component of the twist is the product of the linear scale factor and the left vertical axis input on joy
     twist.linear.x = linear_scale_ * joy->axes[left_vert_axis_]; // has a maximum value of 1
 
@@ -121,6 +124,7 @@ void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
   }
 
 
+  //TODO: finish up with the switch between autonomy and teleop
   if(joy->buttons[x_button_]){
     autonomy_cmd_pub_.publish(empty);
   }
