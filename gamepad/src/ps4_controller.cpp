@@ -20,11 +20,16 @@ private:
 
   ros::NodeHandle nh_;
 
+  bool digging; //have driving and digging stages toggle between them using the x button
+
   int left_vert_axis_, right_horiz_axis_, left_trigger_, right_trigger_;
-  int start_button_;
+  int start_button_, x_button_;
   double linear_scale_, angular_scale_;
   
-  
+  int button_last_val[5] = {0};
+  bool on_press[5] = false; //elements are true if the button has just been pressed
+                            //{start,x,...}
+
   ros::Publisher vel_pub_; // velocity publisher node
   ros::Publisher autonomy_cmd_pub_; // autonomy publisher node
   ros::Publisher linear_rc_; //digger linear acuator velocity
@@ -40,7 +45,8 @@ PS4Controller::PS4Controller(): // This is an initialization list of the indexes
   right_horiz_axis_(2),
   right_trigger_(4),
   left_trigger_(3),
-  start_button_(12)
+  start_button_(12),
+  x_button_(7) //IMPORTANT: can't find the aray element is x at the moment, so number will need to change
 {
 
   // get parameters from the parameter server
@@ -60,6 +66,9 @@ PS4Controller::PS4Controller(): // This is an initialization list of the indexes
   linear_rc_ = nh_.advertise<std_msgs::Float32>("/linear_rc",5);
   digger_rc_ = nh_.advertise<std_msgs::Float32>("/digger_rc",5);
 
+  //start in the driving stage
+  digging = false;
+
   // subscribe to the incoming joystick input
   // argument description: (name of topic, number of messages to queue, callback pointer, what object to call that callback on)
   joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &PS4Controller::joyCallback, this);
@@ -76,26 +85,49 @@ void PS4Controller::joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
 
   std_msgs::Float32 digger_rc_msg;
 
-  // The linear-x component of the twist is the product of the linear scale factor and the left vertical axis input on joy
-  twist.linear.x = linear_scale_ * joy->axes[left_vert_axis_]; // has a maximum value of 1
+  //checking if start button has been pressed
+  int cur_start_val = joy->buttons[start_button_];
+  
+  if (cur_start_val == 1 and button_last_val[0] == 0) {
+    on_press[0] = true;
 
-  // The angular-z component of the twist is the product of the angular scale factor and the right horizontal axis input on joy
-  twist.angular.z = angular_scale_ * joy->axes[right_horiz_axis_]; // has a maximum value of 1
+  } else {
+    on_press[0] = false;
+  }
+
+  //change state of controller bsaed on button press
+  if (on_press[0]) digging = ~digging;
 
 
-  // The velocity of the linear acuator that controls the digger arm: value between 1 and -1
-  linear_rc_msg.data = -1.0f * joy->axes[right_trigger_];
+  if (digging){ //use controls digger
 
-  // The velocity of the digger drum: value between 1 and -1
-  digger_rc_msg.data = -1.0f * joy->axes[left_trigger_];
+    // The velocity of the linear acuator that controls the digger arm: value between 1 and -1
+    linear_rc_msg.data = -1.0f * joy->axes[right_trigger_];
 
-  if(joy->buttons[start_button_]){
+    // The velocity of the digger drum: value between 1 and -1
+    digger_rc_msg.data = -1.0f * joy->axes[left_trigger_];
+
+    digger_rc_.publish(digger_rc_msg);
+    linear_rc_.publish(linear_rc_msg);
+    
+  } else { //use controls for mobility
+      // The linear-x component of the twist is the product of the linear scale factor and the left vertical axis input on joy
+    twist.linear.x = linear_scale_ * joy->axes[left_vert_axis_]; // has a maximum value of 1
+
+    // The angular-z component of the twist is the product of the angular scale factor and the right horizontal axis input on joy
+    twist.angular.z = angular_scale_ * joy->axes[right_horiz_axis_]; // has a maximum value of 1
+
+    vel_pub_.publish(twist);
+  }
+
+
+  if(joy->buttons[x_button_]){
     autonomy_cmd_pub_.publish(empty);
   }
   
-  vel_pub_.publish(twist);
-  digger_rc_.publish(digger_rc_msg);
-  linear_rc_.publish(linear_rc_msg);
+  //copy over tthe current values of buttons to the button_last_val array
+  button_last_val = {joy->buttons[start_button_], joy->buttons[x_button_]};
+
 }
 
 int main(int argc, char** argv){
